@@ -1,0 +1,13 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./weights:/app/weights
+      - ./sample_data:/app/sample_data
+    env_file:
+      - .env
+    environment:
+      - MODEL_DEVICE=cpu
+    restart: unless-stopped
