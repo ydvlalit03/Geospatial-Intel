@@ -1,0 +1,42 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Model weights
+weights/*.pt
+weights/*.pth
+weights/*.onnx
+!weights/.gitkeep
+!weights/download_weights.py
+
+# Data
+sample_data/*.tif
+sample_data/*.tiff
+!sample_data/.gitkeep
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
