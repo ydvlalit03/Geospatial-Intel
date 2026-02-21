@@ -11,10 +11,9 @@ from src.models.unet import UNet
 CLASS_NAMES = {
     0: "background",
     1: "building",
-    2: "road",
-    3: "vegetation",
-    4: "water",
-    5: "barren",
+    2: "woodland",
+    3: "water",
+    4: "road",
 }
 
 
@@ -31,7 +30,7 @@ class SegmentationPipeline:
     def __init__(
         self,
         weights_path: str | Path | None = None,
-        num_classes: int = 6,
+        num_classes: int = 5,
         device: str = "cpu",
         image_size: int = 256,
     ):

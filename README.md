@@ -4,7 +4,7 @@
 
 ## Architecture
 
-- **U-Net** — Land cover segmentation (buildings, roads, vegetation, water, barren)
+- **U-Net** — Land cover segmentation (background, building, woodland, water, road)
 - **YOLOv8** — Object detection (vehicles, structures, ships)
 - **FastAPI** — REST API with `/predict/segment`, `/predict/detect`, `/query` endpoints
 - **LangGraph** — AI agent for natural language geospatial queries
@@ -46,6 +46,50 @@ docker-compose up --build
 | `/predict/segment` | POST | Upload image → segmentation mask + class distribution |
 | `/predict/detect` | POST | Upload image → bounding boxes + class counts |
 | `/query` | POST | Natural language query → AI agent response |
+
+## Training Data
+
+### U-Net — Land Cover Segmentation
+
+The U-Net model is trained on **[LandCover.ai](https://landcover.ai/)** high-resolution aerial imagery for 5-class land cover segmentation:
+`background`, `building`, `woodland`, `water`, `road`.
+
+The dataset expects paired image + mask directories:
+```
+dataset/
+├── images/    # RGB satellite patches (256x256 PNG/TIF)
+└── masks/     # Single-channel label masks (pixel value = class ID)
+```
+
+**Recommended datasets:**
+- [LandCover.ai](https://landcover.ai/) — High-resolution aerial imagery with building, woodland, water, and road annotations
+- [DeepGlobe Land Cover](https://competitions.codalab.org/competitions/18468) — Satellite images with 7 land cover classes
+- [Sentinel-2 Land Use/Land Cover](https://livingatlas.arcgis.com/landcoverexplorer/) — Global 10m resolution land cover derived from Sentinel-2
+
+The training notebook (`02_unet_training.ipynb`) automatically downloads and prepares LandCover.ai for training.
+
+### YOLOv8 — Object Detection
+
+The YOLOv8 model starts from **COCO-pretrained weights** (`yolov8n.pt`) and is fine-tuned on satellite imagery for detecting objects like vehicles, structures, and ships.
+
+The dataset must follow standard YOLO format:
+```
+dataset/
+├── train/
+│   ├── images/    # Satellite image patches
+│   └── labels/    # YOLO .txt annotations (class x_center y_center width height)
+├── val/
+│   ├── images/
+│   └── labels/
+└── data.yaml      # Class names and paths
+```
+
+**Recommended datasets:**
+- [DOTA](https://captain-whu.github.io/DOTA/) — Large-scale dataset for object detection in aerial images (15 categories)
+- [xView](http://xviewdataset.org/) — One of the largest overhead imagery datasets (60 classes, 1M+ objects) — **used by default**
+- [DIOR](https://gcheng-nwpu.github.io/#Datasets) — 20 object classes in optical remote sensing images
+
+The training notebook (`03_yolov8_training.ipynb`) downloads xView via the Kaggle API, converts annotations to YOLO format, and fine-tunes YOLOv8 on 60 object classes.
 
 ## Training (Google Colab)
 

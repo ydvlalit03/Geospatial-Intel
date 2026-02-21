@@ -33,7 +33,7 @@ class UNet(nn.Module):
     """
 
     def __init__(
-        self, in_channels: int = 3, num_classes: int = 6, use_resnet: bool = False
+        self, in_channels: int = 3, num_classes: int = 5, use_resnet: bool = False
     ):
         super().__init__()
         self.use_resnet = use_resnet
