@@ -1,120 +1,85 @@
 # Geospatial Intelligence Platform
 
-3D Geospatial Intelligence Platform that analyzes satellite imagery using U-Net (segmentation) and YOLOv8 (object detection), served via FastAPI, with a LangGraph AI agent for natural language querying.
+A 3D geospatial intelligence platform that analyzes satellite imagery using deep learning — **U-Net** for land-cover segmentation and **YOLOv8** for object detection — served through a **FastAPI** REST API, with a **LangGraph** agent that answers natural-language questions about the imagery.
 
-## Architecture
+---
 
-- **U-Net** — Land cover segmentation (background, building, woodland, water, road)
-- **YOLOv8** — Object detection (vehicles, structures, ships)
-- **FastAPI** — REST API with `/predict/segment`, `/predict/detect`, `/query` endpoints
-- **LangGraph** — AI agent for natural language geospatial queries
-- **Docker** — Containerized deployment
+## Features
 
-## Quick Start
+- **Land-cover segmentation** — U-Net classifies each pixel into `background`, `building`, `woodland`, `water`, `road`
+- **Object detection** — YOLOv8 detects vehicles, structures, ships and 60+ classes (fine-tuned from COCO weights)
+- **Natural-language querying** — a LangGraph agent (parse → execute → respond) lets you ask questions in plain English
+- **REST API** — clean endpoints for segmentation, detection and querying, with Swagger docs
+- **Containerized** — one-command Docker Compose deployment
 
-```bash
-# 1. Clone and setup
-cd ~/projects/geospatial-intel
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
+---
 
-# 2. Create .env from example
-cp .env.example .env
-# Edit .env with your OPENAI_API_KEY
+## Tech Stack
 
-# 3. Download/create model weights
-python weights/download_weights.py
+- **Models**: PyTorch (U-Net), Ultralytics YOLOv8
+- **API**: FastAPI + Uvicorn
+- **Agent**: LangGraph, LangChain
+- **Geo / imaging**: rasterio, albumentations
+- **Deploy**: Docker, docker-compose
 
-# 4. Run the API
-uvicorn src.api.main:app --reload
-
-# 5. Open Swagger docs
-open http://localhost:8000/docs
-```
-
-## Docker
-
-```bash
-docker-compose up --build
-```
+---
 
 ## API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/health` | GET | Health check + model status |
-| `/predict/segment` | POST | Upload image → segmentation mask + class distribution |
-| `/predict/detect` | POST | Upload image → bounding boxes + class counts |
-| `/query` | POST | Natural language query → AI agent response |
+| `/predict/segment` | POST | Image → segmentation mask + class distribution |
+| `/predict/detect` | POST | Image → bounding boxes + class counts |
+| `/query` | POST | Natural-language query → AI agent response |
 
-## Training Data
+---
 
-### U-Net — Land Cover Segmentation
+## Quick Start
 
-The U-Net model is trained on **[LandCover.ai](https://landcover.ai/)** high-resolution aerial imagery for 5-class land cover segmentation:
-`background`, `building`, `woodland`, `water`, `road`.
+### Prerequisites
 
-The dataset expects paired image + mask directories:
-```
-dataset/
-├── images/    # RGB satellite patches (256x256 PNG/TIF)
-└── masks/     # Single-channel label masks (pixel value = class ID)
-```
+- Python 3.10+
+- An LLM API key (for the query agent)
 
-**Recommended datasets:**
-- [LandCover.ai](https://landcover.ai/) — High-resolution aerial imagery with building, woodland, water, and road annotations
-- [DeepGlobe Land Cover](https://competitions.codalab.org/competitions/18468) — Satellite images with 7 land cover classes
-- [Sentinel-2 Land Use/Land Cover](https://livingatlas.arcgis.com/landcoverexplorer/) — Global 10m resolution land cover derived from Sentinel-2
+### Setup
 
-The training notebook (`02_unet_training.ipynb`) automatically downloads and prepares LandCover.ai for training.
+```bash
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
 
-### YOLOv8 — Object Detection
+cp .env.example .env          # add your OPENAI_API_KEY
+python weights/download_weights.py
 
-The YOLOv8 model starts from **COCO-pretrained weights** (`yolov8n.pt`) and is fine-tuned on satellite imagery for detecting objects like vehicles, structures, and ships.
-
-The dataset must follow standard YOLO format:
-```
-dataset/
-├── train/
-│   ├── images/    # Satellite image patches
-│   └── labels/    # YOLO .txt annotations (class x_center y_center width height)
-├── val/
-│   ├── images/
-│   └── labels/
-└── data.yaml      # Class names and paths
+uvicorn src.api.main:app --reload
+open http://localhost:8000/docs
 ```
 
-**Recommended datasets:**
-- [DOTA](https://captain-whu.github.io/DOTA/) — Large-scale dataset for object detection in aerial images (15 categories)
-- [xView](http://xviewdataset.org/) — One of the largest overhead imagery datasets (60 classes, 1M+ objects) — **used by default**
-- [DIOR](https://gcheng-nwpu.github.io/#Datasets) — 20 object classes in optical remote sensing images
+### Docker
 
-The training notebook (`03_yolov8_training.ipynb`) downloads xView via the Kaggle API, converts annotations to YOLO format, and fine-tunes YOLOv8 on 60 object classes.
+```bash
+docker-compose up --build
+```
 
-## Training (Google Colab)
+---
 
-Training notebooks are in `notebooks/`:
-1. `01_data_exploration.ipynb` — Visualize satellite bands, compute NDVI
-2. `02_unet_training.ipynb` — Train U-Net segmentation model
-3. `03_yolov8_training.ipynb` — Fine-tune YOLOv8 for satellite detection
+## Training
+
+Training notebooks live in `notebooks/`:
+
+1. `01_data_exploration.ipynb` — visualize satellite bands, compute NDVI
+2. `02_unet_training.ipynb` — train U-Net on [LandCover.ai](https://landcover.ai/) (5-class)
+3. `03_yolov8_training.ipynb` — fine-tune YOLOv8 on [xView](http://xviewdataset.org/) (60 classes)
+
+---
 
 ## Project Structure
 
 ```
 src/
-├── models/          # U-Net architecture + YOLOv8 wrapper
-├── data/            # Preprocessing, datasets, augmentation
-├── inference/       # Segmentation + detection pipelines
-├── agent/           # LangGraph agent (parse → execute → respond)
-└── api/             # FastAPI application + routes
+├── models/       # U-Net architecture + YOLOv8 wrapper
+├── data/         # preprocessing, datasets, augmentation
+├── inference/    # segmentation + detection pipelines
+├── agent/        # LangGraph agent (parse → execute → respond)
+└── api/          # FastAPI application + routes
 ```
-
-## Tests
-
-```bash
-pytest tests/ -v
-```
-
-## Tech Stack
-
-PyTorch, Ultralytics YOLOv8, FastAPI, LangGraph, LangChain, rasterio, albumentations, Docker
